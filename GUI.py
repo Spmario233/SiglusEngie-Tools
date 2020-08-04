@@ -105,20 +105,20 @@ class findKey(threading.Thread):
         self.signal.clear()
     def run(self):
         try:
-            f=subprocess.Popen(os.getcwd()+"\\skf.exe",
+            f=subprocess.Popen(os.getcwd()+"/skf.exe",
                                creationflags=subprocess.CREATE_NO_WINDOW,
                                stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
         except Exception as e:
-            messagebox.showerror("Error!","Can't start skf.exe!\n"+e)
+            messagebox.showerror("出错！","无法启动skf.exe!\n"+e)
         cmdText['state']='normal'
         print("请启动游戏，然后稍等片刻...\n"+
               "再次点击此按钮以停止搜索。")
         cmdText['state']='disabled'
         n=1
         while f.poll()==None:
-            kfButton['text']="Finding"+'.'*n
+            kfButton['text']="搜索中"+'.'*n
             n=n%3+1
             time.sleep(1)
             if not self.signal.isSet():
@@ -137,7 +137,7 @@ class findKey(threading.Thread):
                                    "Can't find key!\nPlease try again.")
             else:
                 messagebox.showerror("Error!","Can't start skf.exe!")
-            kfButton['text']="搜索密钥"
+            kfButton['text']="Find Key"
             return
         else:
             messagebox.showinfo("提示","密钥已找到！")
@@ -170,28 +170,10 @@ def select(event):
     title.pack()
 
 def clear():
-    try:
-        name1.grid_forget()
-        entry1.grid_forget()
-        button1.grid_forget()
-    except:pass
-    try:
-        name2.grid_forget()
-        entry2.grid_forget()
-        button2.grid_forget()
-    except:pass
-    try:
-        name3.grid_forget()
-        entry3.grid_forget()
-        button3.grid_forget()
-    except:pass
-    try:
-        buttonB.grid_forget()
-    except:pass
-    try:
-        nameC.grid_forget()
-        entryC.grid_forget()
-    except:pass
+    global inputFrame
+    inputFrame.pack_forget()
+    inputFrame=Frame(rightFrame)
+    inputFrame.pack(side='top')
 
 def selectFile(v):
     global lastDir
@@ -238,17 +220,17 @@ def runningExe(cmd):
         startButton['state']='disabled'
     print('正在运行 "'+cmd[0:cmd.find('.exe')+4]+'"...')
     try:
-        exe=subprocess.Popen(os.getcwd()+"\\"+cmd,bufsize=1,
+        exe=subprocess.Popen(os.getcwd()+"/"+cmd,bufsize=1,
                              creationflags=subprocess.CREATE_NO_WINDOW,
                              stdin=subprocess.PIPE,stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,universal_newlines=True)
         for line in iter(exe.stdout.readline,''):
             print(line.replace('\n',''))
     except Exception as e:
-        messagebox.showerror("出错！","Can't create process!\n"+e)
+        messagebox.showerror("出错！","无法创建进程！\n"+e)
     else:
         if exe.stderr.readlines() or line==[]:
-            messagebox.showerror("出错！","Failed!")
+            messagebox.showerror("出错！","失败！")
         else:
             if line[:5]=="error":
                 messagebox.showwarning("警告",line)
@@ -259,9 +241,6 @@ def runningExe(cmd):
 
 class setSceneUnpacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Scene文件:")
         name2=Label(inputFrame,text="输出文件夹:")
@@ -286,9 +265,6 @@ class setSceneUnpacker:
 
 class setScenePacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="原Scene文件:")
         name2=Label(inputFrame,text="Scene文件夹:")
@@ -337,9 +313,6 @@ class setScenePacker:
         
 class setGameexeUnpacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Gameexe文件:")
         name2=Label(inputFrame,text="输出文件:")
@@ -364,9 +337,6 @@ class setGameexeUnpacker:
 
 class setGameexePacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Gameexe文件:")
         name2=Label(inputFrame,text="输出文件:")
@@ -413,17 +383,24 @@ class setGameexePacker:
 
 class setssDumper:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
-        global valueB1,valueB2
         
         def checkEnable():
             if valueB1.get():
                 buttonB2['state']='normal'
             else:
                 valueB2.set(False)
+                checkName()
                 buttonB2['state']='disabled'
+        def checkName():
+            if valueB2.get():
+                name2['text']='输出文件:'
+            else:
+                name2['text']="输出文件夹:"
+        def outSelect():
+            if valueB2.get():
+                setFile(value2)
+            else:
+                selectFolder(value2)
                 
         clear()
         name1=Label(inputFrame,text="ss文件夹:")
@@ -437,24 +414,29 @@ class setssDumper:
         entry1.grid(row=1,column=0,padx=2)
         entry2.grid(row=3,column=0,padx=2)
         button1=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=lambda:selectFolder(value1))
-        button2=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=lambda:selectFolder(value2))
+        button2=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=outSelect)
         button1.grid(row=1,column=1,padx=2)
         button2.grid(row=3,column=1,padx=2)
         valueB.set(False)
         valueB1.set(False)
         valueB2.set(False)
+        valueB3.set(True)
         buttonB=Frame(inputFrame)
         buttonB.grid(row=6,column=0,padx=2,pady=4,sticky='w')
-        buttonB3=Checkbutton(buttonB,text="不过滤纯英文文本",variable=valueB)
-        buttonB1=Checkbutton(buttonB,text="导出为xlsx格式",command=checkEnable,variable=valueB1)
-        buttonB2=Checkbutton(buttonB,text="导出为单个xlsx文件",state='disabled',variable=valueB2)
+        buttonB3=Checkbutton(buttonB,text="复制文本",variable=valueB3)
+        buttonB0=Checkbutton(buttonB,text="不过滤纯英文文本",variable=valueB)
+        buttonB1=Checkbutton(buttonB,text="导出为xlsx",command=checkEnable,variable=valueB1)
+        buttonB2=Checkbutton(buttonB,text="导出为单个xlsx文件",state='disabled',command=checkName,variable=valueB2)
         buttonB3.grid(row=0,column=0,sticky='w')
-        buttonB1.grid(row=0,column=1,sticky='e')
-        buttonB2.grid(row=0,column=2,sticky='e')
+        buttonB0.grid(row=0,column=1,sticky='w')
+        buttonB1.grid(row=0,column=2,sticky='e')
+        buttonB2.grid(row=0,column=3,sticky='e')
     def run(self):
         cmd=["ssDumper",value1.get(),value2.get()]
         if valueB.get():
             cmd.append("-a")
+        if valueB3.get():
+            cmd.append("-d")
         if valueB1.get():
             cmd.append("-x")
             if valueB2.get():
@@ -466,10 +448,6 @@ class setssDumper:
 
 class setssPacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
-        global valueB1,valueB2
         clear()
         name1=Label(inputFrame,text="原ss文件夹:")
         name2=Label(inputFrame,text="文本文件夹:")
@@ -506,9 +484,6 @@ class setssPacker:
 
 class setdbsDecrypt:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Dbs文件:")
         name1.grid(row=0,padx=2,sticky='w')
@@ -531,9 +506,6 @@ class setdbsDecrypt:
 
 class setdbsEncrypt:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Dbs.out文件:")
         name2=Label(inputFrame,text="Dbs.txt文件:")
@@ -575,9 +547,6 @@ class setdbsEncrypt:
 
 class setpckUnpacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="Pck文件:")
         name2=Label(inputFrame,text="输出文件夹:")
@@ -602,9 +571,6 @@ class setpckUnpacker:
         
 class setpckPacker:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="要打包的文件夹:")
         name2=Label(inputFrame,text="输出文件:")
@@ -629,16 +595,13 @@ class setpckPacker:
 
 class setomvCuter:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="OMV文件:")
         name1.grid(row=0,padx=2,sticky='w')
         value1.set("*.omv")
         entry1=Entry(inputFrame,width=ENTRY_WIDTH,textvariable=value1)
         entry1.grid(row=1,column=0,padx=2)
-        button1=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=lambda:selectFile(value1))
+        button1=Button(inputFrame,text="Select",width=BUTTON_WIDTH,command=lambda:selectFile(value1))
         button1.grid(row=1,column=1,padx=2)
     def run(self):
         cmd=["omvCuter",value1.get()]
@@ -649,9 +612,6 @@ class setomvCuter:
 
 class setsiglusOmv:
     def __init__(self):
-        global name1,name2,name3,entry1,entry2,entry3,button1,button2,button3
-        global buttonB,nameC,entryC
-        global value1,value2,value3,valueB,valueC
         clear()
         name1=Label(inputFrame,text="ogv文件（必须是YUV444p）:")
         name2=Label(inputFrame,text="OMV文件:")
@@ -663,8 +623,8 @@ class setsiglusOmv:
         entry2=Entry(inputFrame,width=ENTRY_WIDTH,textvariable=value2)
         entry1.grid(row=1,column=0,padx=2)
         entry2.grid(row=3,column=0,padx=2)
-        button1=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=lambda:selectFile(value1))
-        button2=Button(inputFrame,text="选择",width=BUTTON_WIDTH,command=lambda:selectFile(value2))
+        button1=Button(inputFrame,text="Select",width=BUTTON_WIDTH,command=lambda:selectFile(value1))
+        button2=Button(inputFrame,text="Select",width=BUTTON_WIDTH,command=lambda:selectFile(value2))
         button1.grid(row=1,column=1,padx=2)
         button2.grid(row=3,column=1,padx=2)
     def run(self):
@@ -694,7 +654,7 @@ root.geometry("640x480")
 lastSelect=0
 
 try:
-    f=subprocess.Popen(os.getcwd()+"\\siglusomv.exe")
+    f=subprocess.Popen(os.getcwd()+"/siglusomv.exe")
     f.kill()
 except:pass
 else:
@@ -731,7 +691,9 @@ value3=StringVar()
 valueB=BooleanVar()
 valueB1=BooleanVar()
 valueB2=BooleanVar()
+valueB3=BooleanVar()
 valueC=StringVar()
+
 keyVar=StringVar()
 tempKey=loadKey()
 
@@ -748,7 +710,7 @@ keyEntry.bind("<Control-Key-v>",unlock)
 keyEntry.pack(side='left',padx=PAD,pady=PAD,anchor='w')
 
 try:
-    f=subprocess.Popen(os.getcwd()+"\\skf.exe")
+    f=subprocess.Popen(os.getcwd()+"/skf.exe")
     f.kill()
 except:
     hasSkf=False
